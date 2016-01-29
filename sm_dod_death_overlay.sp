@@ -103,12 +103,11 @@ public Action:OnPlayerDeath(Handle:event, const String:name[], bool:dontBroadcas
 
 public Action:ShowOverlayToClient(Handle:timer, any:client)
 {
-	{
 	decl String:overlaypath[PLATFORM_MAX_PATH]
 	GetConVarString(DeathOverlay, overlaypath, sizeof(overlaypath))
 	ClientCommand(client, "r_screenoverlay \"%s\"", overlaypath)
-	}
-	return DeathOverlayOff
+
+	return DeathOverlayOff(client)
 }
 
 DeathOverlayOff(client)
