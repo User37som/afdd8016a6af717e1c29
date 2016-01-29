@@ -30,7 +30,7 @@ public Plugin:myinfo =
 public OnPluginStart()
 {
 	DeathOverlay = CreateConVar("sm_dod_deathoverlay", "decals/death_overlay/deathoverlay", "overlay to display, relative to materials folder without file extension (set download and precache in sourcemod/configs/dod_death_overlay_download.ini)", FCVAR_PLUGIN)
-	g_TimeDeathOverlay = CreateConVar("sm_dod_deathoverlaytime", "2.0", "<#> = How many seconds display overlay", FCVAR_PLUGIN, true, 1.0, true, 3.0)
+	g_TimeDeathOverlay = CreateConVar("sm_dod_deathoverlaytime", "2.0", "How many seconds to display overlay", FCVAR_PLUGIN, true, 1.0, true, 5.0)
 
 	HookEventEx("player_death", OnPlayerDeath, EventHookMode_Post)
 	HookEventEx("player_spawn", OnPlayerSpawn, EventHookMode_Post)
@@ -95,7 +95,7 @@ public Action:OnPlayerDeath(Handle:event, const String:name[], bool:dontBroadcas
 	
 	new clientID = GetClientOfUserId(GetEventInt(event, "userid"))
 	new client   = GetClientOfUserId(clientID)
-	if (IsClientInGame(client)&& GetConVarInt(g_TimeDeathOverlay))
+	GetConVarInt(g_TimeDeathOverlay)
 	{
 		DeathOverlayTimer[client] = CreateTimer(GetConVarFloat(g_TimeDeathOverlay), ShowOverlayToClient, clientID, TIMER_FLAG_NO_MAPCHANGE)
 	}
