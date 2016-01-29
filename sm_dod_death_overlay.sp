@@ -12,10 +12,11 @@
 // Constantes
 #define PLUGIN_NAME    "DoD Death Overlay"
 #define PLUGIN_VERSION	 "1.1"
-// Handles
-new Handle:DeathOverlay = INVALID_HANDLE
-new Handle:TimeDeathOverlay = INVALID_HANDLE
-new Handle:DeathOverlayTimer[MAXPLAYERS+1] = INVALID_HANDLE
+#define DOD_MAXPLAYERS 33
+
+new Handle:DeathOverlay = INVALID_HANDLE,
+	Handle:g_TimeDeathOverlay = INVALID_HANDLE,
+	Handle:DeathOverlayTimer[DOD_MAXPLAYERS + 1] = INVALID_HANDLE;
 //Infos
 public Plugin:myinfo = 
 {
@@ -29,9 +30,11 @@ public Plugin:myinfo =
 public OnPluginStart()
 {
 	DeathOverlay = CreateConVar("sm_dod_deathoverlay", "decals/death_overlay/deathoverlay", "overlay to display, relative to materials folder without file extension (set download and precache in sourcemod/configs/dod_death_overlay_download.ini)", FCVAR_PLUGIN)
-	TimeDeathOverlay = CreateConvar("sm_dod_deathoverlaytime", "2", "<#> = How many seconds between 1.0 to 3.0 to display overlay", FCVAR_PLUGIN, true, 1.0, true, 3.0)
+	g_TimeDeathOverlay = CreateConVar("sm_dod_deathoverlaytime", "2.0", "<#> = How many seconds display overlay", FCVAR_PLUGIN, true, 1.0, true, 3.0)
+
 	HookEventEx("player_death", OnPlayerDeath, EventHookMode_Post)
 	HookEventEx("player_spawn", OnPlayerSpawn, EventHookMode_Post)
+	
 	AutoExecConfig(true, "sm_dod_deathoverlay", "sm_dod_deathoverlay")
 }
 
@@ -89,28 +92,34 @@ public Action:OnPlayerSpawn(Handle:event, const String:name[], bool:dontBroadcas
 
 public Action:OnPlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
 {
-	decl String:overlaypath[PLATFORM_MAX_PATH]
 	
-	new client = GetClientOfUserId(GetEventInt(event, "userid"))
-	if (IsClientInGame(client))
+	new clientID = GetClientOfUserId(GetEventInt(event, "userid"))
+	new client   = GetClientOfUserId(clientID)
+	if (IsClientInGame(client)&& GetConVarInt(g_TimeDeathOverlay))
 	{
-		GetConVarString(sm_dod_deathoverlay, overlaypath, sizeof(overlaypath))
-		DeathOverlayTimer(client) = CreateTimer(GetConVarFloat(sm_dod_deathoverlaytime), ShowOverlayToClient(client, overlaypath), TIMER_FLAG_NO_MAPCHANGE)
+		DeathOverlayTimer[client] = CreateTimer(GetConVarFloat(g_TimeDeathOverlay), ShowOverlayToClient, clientID, TIMER_FLAG_NO_MAPCHANGE)
+	}
+}
+
+public Action:ShowOverlayToClient(Handle:timer, any:client)
+{
+	{
+	decl String:overlaypath[PLATFORM_MAX_PATH]
+	GetConVarString(DeathOverlay, overlaypath, sizeof(overlaypath))
+	ClientCommand(client, "r_screenoverlay \"%s\"", overlaypath)
 	}
 	return DeathOverlayOff
 }
 
-ShowOverlayToClient(client, const String:overlaypath[])
+DeathOverlayOff(client)
 {
-	ClientCommand(client, "r_screenoverlay \"%s\"", overlaypath)
-}
-
-DeathOverlayOff(Handle:timer, const String:name[], bool:dontBroadcast)
-{
-	new client = GetClientOfUserId(GetEventInt(event, "userid"))
-	if (IsClientInGame(client) && IsPlayerAlive(client))
+	if ((client = GetClientOfUserId(client)))
 	{
-		ClientCommand(client, "r_screenoverlay 0")
+		DeathOverlayTimer[client] = INVALID_HANDLE
+		if (IsClientInGame(client) && IsPlayerAlive(client))
+		{
+			ClientCommand(client, "r_screenoverlay 0")
+		}
 	}
 	return Plugin_Continue
-} 
+}
