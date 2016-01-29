@@ -99,6 +99,8 @@ public Action:OnPlayerDeath(Handle:event, const String:name[], bool:dontBroadcas
 	{
 		DeathOverlayTimer[client] = CreateTimer(GetConVarFloat(g_TimeDeathOverlay), ShowOverlayToClient, clientID, TIMER_FLAG_NO_MAPCHANGE)
 	}
+	
+	DeathOverlayOff(client)
 }
 
 public Action:ShowOverlayToClient(Handle:timer, any:client)
@@ -106,11 +108,9 @@ public Action:ShowOverlayToClient(Handle:timer, any:client)
 	decl String:overlaypath[PLATFORM_MAX_PATH]
 	GetConVarString(DeathOverlay, overlaypath, sizeof(overlaypath))
 	ClientCommand(client, "r_screenoverlay \"%s\"", overlaypath)
-
-	return DeathOverlayOff(client)
 }
 
-DeathOverlayOff(client)
+public Action:DeathOverlayOff(client)
 {
 	if ((client = GetClientOfUserId(client)))
 	{
