@@ -92,33 +92,36 @@ public Action:OnPlayerSpawn(Handle:event, const String:name[], bool:dontBroadcas
 
 public Action:OnPlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
 {
-	
-	new clientID = GetClientOfUserId(GetEventInt(event, "userid"))
-	new client   = GetClientOfUserId(clientID)
-	GetConVarInt(g_TimeDeathOverlay)
+	decl String:overlaypath[PLATFORM_MAX_PATH]
+	new client = GetClientOfUserId(GetEventInt(event, "userid"))
+	if(IsClientInGame(client))
 	{
-		DeathOverlayTimer[client] = CreateTimer(GetConVarFloat(g_TimeDeathOverlay), ShowOverlayToClient, clientID, TIMER_FLAG_NO_MAPCHANGE)
+	GetConVarString(DeathOverlay, overlaypath, sizeof(overlaypath))
+	ShowOverlayToClient(client, overlaypath)	
 	}
-	
+	return Plugin_Continue
+}
+
+
+ShowOverlayToClient(client, const String:overlaypath[])
+{
+	ClientCommand(client, "r_screenoverlay \"%s\"", overlaypath)
 	DeathOverlayOff(client)
 }
 
-public Action:ShowOverlayToClient(Handle:timer, any:client)
-{
-	decl String:overlaypath[PLATFORM_MAX_PATH]
-	GetConVarString(DeathOverlay, overlaypath, sizeof(overlaypath))
-	ClientCommand(client, "r_screenoverlay \"%s\"", overlaypath)
-}
 
-public Action:DeathOverlayOff(client)
+DeathOverlayOff(client)
 {
+	GetConVarInt(g_TimeDeathOverlay)
 	if ((client = GetClientOfUserId(client)))
 	{
-		DeathOverlayTimer[client] = INVALID_HANDLE
-		if (IsClientInGame(client) && IsPlayerAlive(client))
-		{
-			ClientCommand(client, "r_screenoverlay 0")
-		}
+	DeathOverlayTimer[client] = CreateTimer(GetConVarFloat(g_TimeDeathOverlay), DontShowOverlayToClient, client, TIMER_FLAG_NO_MAPCHANGE)
 	}
+}
+
+public Action:DontShowOverlayToClient(Handle:timer, any:client)
+{
+	ClientCommand(client, "r_screenoverlay 0")
+	DeathOverlayTimer[client] = INVALID_HANDLE
 	return Plugin_Continue
 }
