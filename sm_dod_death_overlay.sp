@@ -4,6 +4,11 @@
 // Thanks to them !
 // :)
 // vintage
+// V 1.0:
+// original plugin (request by LeTaz)
+// Overlay too long (stay from death to respawn)
+// V 1.1:
+// added auto cfg config for overlay model and a timer duration to display the overlay
 */
 // Includes
 #include <sourcemod>
@@ -98,25 +103,17 @@ public Action:OnPlayerDeath(Handle:event, const String:name[], bool:dontBroadcas
 	{
 	GetConVarString(DeathOverlay, overlaypath, sizeof(overlaypath))
 	ShowOverlayToClient(client, overlaypath)	
-	}
+	GetConVarInt(g_TimeDeathOverlay)
+	DeathOverlayTimer[client] = CreateTimer(GetConVarFloat(g_TimeDeathOverlay), DontShowOverlayToClient, client, TIMER_FLAG_NO_MAPCHANGE)
+}
 	return Plugin_Continue
 }
 
 
-ShowOverlayToClient(client, const String:overlaypath[])
+public Action:ShowOverlayToClient(client, const String:overlaypath[])
 {
 	ClientCommand(client, "r_screenoverlay \"%s\"", overlaypath)
-	DeathOverlayOff(client)
-}
-
-
-DeathOverlayOff(client)
-{
-	GetConVarInt(g_TimeDeathOverlay)
-	if ((client = GetClientOfUserId(client)))
-	{
-	DeathOverlayTimer[client] = CreateTimer(GetConVarFloat(g_TimeDeathOverlay), DontShowOverlayToClient, client, TIMER_FLAG_NO_MAPCHANGE)
-	}
+	return Plugin_Continue
 }
 
 public Action:DontShowOverlayToClient(Handle:timer, any:client)
